@@ -1,0 +1,77 @@
+import gzip
+import boto3
+import time
+
+cwlogs = boto3.client('logs',region_name='us-east-1')
+s3 = boto3.resource('s3')
+
+def lambda_handler(event, context):
+    #Get bucket name
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    #Get object key
+    object = event['Records'][0]['s3']['object']['key']
+    
+    #Get filename
+    filename = object.split('/')[-1]
+    #Create file path in lambda
+    filepath = '/tmp/'+filename
+    print filepath
+    s3.meta.client.download_file(bucket, object, filepath)
+    
+    #Create log group /CFLogs and log stream with filename if not existed
+    loggroup = cwlogs.describe_log_groups(
+        logGroupNamePrefix='/CFLogs'
+        )
+    if len(loggroup['logGroups']) == 0:
+        cwlogs.create_log_group(
+            logGroupName='/CFLogs'
+            )
+    logstream = cwlogs.describe_log_streams(
+        logGroupName='/CFLogs',
+        logStreamNamePrefix = filename
+        )
+    if len(logstream['logStreams']) == 0:
+        cwlogs.create_log_stream(
+            logGroupName = '/CFLogs',
+            logStreamName = filename
+        )
+    print time.time()
+    i = 0
+    with gzip.open(filepath,'rb') as file:
+        for line in file:
+            if i == 0:
+                response = cwlogs.put_log_events(
+                    logGroupName='/CFLogs',
+                    logStreamName = filename,
+                    logEvents=[
+                        {
+                            'timestamp': int(time.time()),
+                            'message': line
+                        }
+                    ]
+                )
+                print response['nextSequenceToken']
+                i+=1
+            else:
+                token = response['nextSequenceToken']
+                print token
+                response = cwlogs.put_log_events(
+                    logGroupName='/CFLogs',
+                    logStreamName = filename,
+                    logEvents=[
+                        {
+                            'timestamp': int(time.time()),
+                            'message': line
+                        }
+                    ],
+                    sequenceToken=token
+                )
+            #print line
+    print time.time()
+    print 'haha'
+    print time.mktime(time.gmtime())
+    #print time.gmtime(secs)
+    #print test
+    #print test1
+    #print event['Records'][0]['s3']['bucket']['name']
+    return 'Hello from Lambda'
