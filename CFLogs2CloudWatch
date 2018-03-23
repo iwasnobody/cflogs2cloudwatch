@@ -50,28 +50,18 @@ def lambda_handler(event, context):
                         }
                     ]
                 )
-                print response['nextSequenceToken']
+                print response
                 i+=1
             else:
-                token = response['nextSequenceToken']
-                print token
                 response = cwlogs.put_log_events(
                     logGroupName='/CFLogs',
                     logStreamName = filename,
                     logEvents=[
                         {
-                            'timestamp': int(time.time()),
+                            'timestamp': int(time.time()*1000),
                             'message': line
                         }
                     ],
                     sequenceToken=token
                 )
-            #print line
-    print time.time()
-    print 'haha'
-    print time.mktime(time.gmtime())
-    #print time.gmtime(secs)
-    #print test
-    #print test1
-    #print event['Records'][0]['s3']['bucket']['name']
-    return 'Hello from Lambda'
+               
