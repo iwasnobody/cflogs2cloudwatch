@@ -44,7 +44,7 @@ def lambda_handler(event, context):
                     logStreamName = filename,
                     logEvents=[
                         {
-                            'timestamp': int(time.time()),
+                            'timestamp': int(time.time()*1000),
                             'message': line
                         }
                     ]
@@ -61,5 +61,5 @@ def lambda_handler(event, context):
                             'message': line
                         }
                     ],
-                    sequenceToken=token
+                sequenceToken=token
                 )
