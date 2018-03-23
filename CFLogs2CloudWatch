@@ -35,11 +35,10 @@ def lambda_handler(event, context):
             logGroupName = '/CFLogs',
             logStreamName = filename
         )
-    print time.time()
     i = 0
     with gzip.open(filepath,'rb') as file:
         for line in file:
-            if i == 0:
+            if i == 0 and line.startswith('#') == False:
                 response = cwlogs.put_log_events(
                     logGroupName='/CFLogs',
                     logStreamName = filename,
@@ -50,9 +49,9 @@ def lambda_handler(event, context):
                         }
                     ]
                 )
-                print response
                 i+=1
-            else:
+            elif i != 0 and line.startswith('#') == False:
+                token = response['nextSequenceToken']
                 response = cwlogs.put_log_events(
                     logGroupName='/CFLogs',
                     logStreamName = filename,
@@ -64,4 +63,3 @@ def lambda_handler(event, context):
                     ],
                     sequenceToken=token
                 )
-               
