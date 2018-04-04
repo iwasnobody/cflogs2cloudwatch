@@ -15,7 +15,6 @@ def lambda_handler(event, context):
     filename = object.split('/')[-1]
     #Create file path in lambda
     filepath = '/tmp/'+filename
-    print filepath
     s3.meta.client.download_file(bucket, object, filepath)
     
     #Create log group /CFLogs and log stream with filename if not existed
